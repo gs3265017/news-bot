@@ -14,12 +14,7 @@ from dotenv import load_dotenv
 
 from crypto import Crypto
 from database import AsyncDatabase
-from keyboards import (
-    get_editor_keyboard,
-    get_review_keyboard,
-    get_approve_keyboard,
-    get_back_keyboard
-)
+from keyboards import Keyboards
 
 ADMINS = list(map(int, os.getenv("ADMIN_IDS").split(',')))
 
@@ -55,6 +50,7 @@ class NewsBot:
         self.db = AsyncDatabase()
         self.crypto = Crypto(os.getenv("ENCRYPTION_KEY"))
         self.vault_path = Path(os.getenv("VAULT_PATH"))
+        self.keyboards = Keyboards()
         
         self._register_handlers()
 
@@ -87,11 +83,13 @@ class NewsBot:
             f"CHANNEL_ID={chat.id}",
             parse_mode="Markdown"
         )
+
     async def _start_handler(self, message: Message):
         """Обработка команды /start"""
         await message.answer(
             "📝 Бот для управления публикациями\n\n"
-            "Отправьте текст для создания новой статьи"
+            "Отправьте текст для создания новой статьи",
+            reply_markup=self.keyboards.main_menu()
         )
 
     async def _text_handler(self, message: Message, state: FSMContext):
@@ -113,7 +111,7 @@ class NewsBot:
             await state.update_data(article_id=article_id)
             await message.answer(
                 "✅ Черновик сохранен",
-                reply_markup=get_editor_keyboard(article_id)
+                reply_markup=self.keyboards.editor_keyboard(article_id)
             )
             
         except Exception as e:
@@ -156,7 +154,7 @@ class NewsBot:
                 chat_id=os.getenv("REVIEWER_CHAT_ID"),
                 document=InputFile(article.file_path),
                 caption=f"📄 Статья #{article_id} на ревью",
-                reply_markup=get_review_keyboard(article_id)
+                reply_markup=self.keyboards.reviewer_keyboard(article_id)
             )
             await callback.answer("Отправлено на ревью!")
             await state.set_state(ArticleStates.REVIEW)
@@ -173,7 +171,7 @@ class NewsBot:
             
             await callback.message.edit_text(
                 text=f"✅ Статья #{article_id} одобрена. Выберите действие:",
-                reply_markup=get_approve_keyboard(article_id)
+                reply_markup=self.keyboards.publish_keyboard(article_id)
             )
             await state.set_state(ArticleStates.APPROVED)
             
@@ -189,7 +187,7 @@ class NewsBot:
             
             await callback.message.edit_text(
                 text=f"❌ Статья #{article_id} отклонена",
-                reply_markup=get_back_keyboard()
+                reply_markup=self.keyboards.back_keyboard()
             )
             await state.set_state(ArticleStates.REJECTED)
             
@@ -217,7 +215,7 @@ class NewsBot:
             
             await callback.message.edit_text(
                 text=f"✏️ Введите комментарий с правками для статьи #{article_id}:",
-                reply_markup=get_back_keyboard()
+                reply_markup=self.keyboards.back_keyboard()
             )
             await state.set_state(ArticleStates.REQUEST_CHANGES)
             await state.update_data(article_id=article_id)
@@ -234,7 +232,7 @@ class NewsBot:
             
             await message.answer(
                 "📝 Комментарий по правкам сохранён",
-                reply_markup=get_editor_keyboard(data['article_id'])
+                reply_markup=self.keyboards.editor_keyboard(data['article_id'])
             )
             await state.set_state(ArticleStates.DRAFT)
             
@@ -248,14 +246,13 @@ class NewsBot:
             data = await state.get_data()
             await callback.message.edit_text(
                 text="Возврат к редактированию статьи",
-                reply_markup=get_editor_keyboard(data['article_id'])
+                reply_markup=self.keyboards.editor_keyboard(data['article_id'])
             )
             await state.set_state(ArticleStates.DRAFT)
             
         except Exception as e:
             logger.error(f"Error in _back_handler: {e}")
             await callback.answer("❌ Ошибка при возврате")
-
 
     async def _publish_to_channel(self, article_id: int):
         """Публикация статьи в DigitalCriticism"""
@@ -311,7 +308,7 @@ class NewsBot:
         """Регистрация всех обработчиков"""
         handlers = [
             (self._start_handler, Command("start")),
-            (self._get_channel_info, Command("get_channel_info")),  # Добавьте эту строку
+            (self._get_channel_info, Command("get_channel_info")),
             (self._text_handler, F.text),
             (self._edit_handler, F.data.startswith("edit_")),
             (self._review_handler, F.data.startswith("review_")),
@@ -329,7 +326,6 @@ class NewsBot:
                     self.dp.message.register(handler, *filters)
                 else:
                     self.dp.callback_query.register(handler, *filters)
-
 
     async def run(self):
         """Запуск бота"""
