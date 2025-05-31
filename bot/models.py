@@ -12,7 +12,7 @@ class Article(Base):
     id = Column(Integer, primary_key=True)  
     user_id = Column(Integer)  
     file_path = Column(String)  
-    status = Column(String)  # draft, review, approved, rejected  
+    status = Column(String)
     reviewer_id = Column(Integer, nullable=True)  
     publish_time = Column(DateTime, nullable=True)  
     created_at = Column(DateTime, default=datetime.utcnow)  

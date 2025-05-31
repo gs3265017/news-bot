@@ -20,7 +20,6 @@ from keyboards import (
     get_back_keyboard
 )
 
-# Настройка логгирования
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
@@ -271,10 +270,8 @@ class NewsBot:
     async def _get_channel_info(self, message: Message):
         """Обработчик команды получения информации о канале"""
         try:
-            # Получаем информацию о канале
             chat = await self.bot.get_chat("@digitalcriticism")
             
-            # Проверяем права бота
             admins = await self.bot.get_chat_administrators(chat.id)
             bot_is_admin = any([admin.user.id == self.bot.id for admin in admins])
             

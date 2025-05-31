@@ -49,3 +49,4 @@ class AsyncDatabase:
                 "INSERT INTO review_comments (article_id, comment) VALUES ($1, $2)",
                 article_id, comment
         )
+            
