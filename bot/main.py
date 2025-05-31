@@ -5,6 +5,7 @@ import logging
 from pathlib import Path
 from aiogram import Bot, Dispatcher, F
 from aiogram.filters import Command
+from aiogram.types import Message
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.context import FSMContext
@@ -20,12 +21,21 @@ from keyboards import (
     get_back_keyboard
 )
 
+ADMINS = list(map(int, os.getenv("ADMIN_IDS").split(',')))
+
+def admin_required(func):
+    async def wrapper(message: Message, *args, **kwargs):
+        if message.from_user.id not in ADMINS:
+            await message.answer("⛔ Доступ запрещен")
+            return
+        return await func(message, *args, **kwargs)
+    return wrapper
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
-
 load_dotenv()
 
 class ArticleStates(StatesGroup):
