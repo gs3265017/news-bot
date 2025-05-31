@@ -1,5 +1,6 @@
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
+
 def get_editor_keyboard(article_id: int) -> InlineKeyboardMarkup:
     """Клавиатура для автора статьи"""
     return InlineKeyboardMarkup(inline_keyboard=[
@@ -62,12 +63,3 @@ def get_back_keyboard():
         [InlineKeyboardButton(text="🔙 Назад", callback_data="back")]
     ])
 
-def get_approve_keyboard(article_id: int):
-    return InlineKeyboardMarkup(inline_keyboard=[
-        [
-            InlineKeyboardButton(
-                text="🚀 Опубликовать", 
-                callback_data=f"publish_{article_id}"
-            )
-        ]
-    ])

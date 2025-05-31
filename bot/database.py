@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+
 class AsyncDatabase:
     def __init__(self):
         self.pool = None
