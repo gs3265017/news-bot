@@ -24,14 +24,27 @@ class AsyncDatabase:
                 user_id, file_path
             )
 
-    async def get_article(self, article_id: int):
+    async def get_article(self, article_id: int) -> dict:
         async with self.pool.acquire() as conn:
-            return await conn.fetchrow("SELECT * FROM articles WHERE id = $1", article_id)
-
+            article = await conn.fetchrow("SELECT * FROM articles WHERE id = $1", article_id)
+            return dict(article) if article else None
+        
     async def update_status(self, article_id: int, status: str):
         async with self.pool.acquire() as conn:
             await conn.execute(
                 "UPDATE articles SET status = $1 WHERE id = $2",
                 status, article_id
             )
-            
+        
+    async def delete_article(self, article_id: int):
+        """Удаление статьи из БД"""
+        async with self.pool.acquire() as conn:
+            await conn.execute("DELETE FROM articles WHERE id = $1", article_id)
+
+    async def log_review(self, article_id: int, comment: str):
+        """Логирование комментариев ревьюера"""
+        async with self.pool.acquire() as conn:
+            await conn.execute(
+                "INSERT INTO review_comments (article_id, comment) VALUES ($1, $2)",
+                article_id, comment
+        )
