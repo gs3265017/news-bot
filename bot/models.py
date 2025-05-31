@@ -5,6 +5,7 @@ from datetime import datetime
 
 Base = declarative_base()  
 
+
 class Article(Base):  
     __tablename__ = 'articles'  
 
