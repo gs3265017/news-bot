@@ -1,0 +1,6 @@
+aiogram==3.20.0pip3 
+asyncpg==0.30.0
+python-dotenv==1.1.0
+cryptography==45.0.3
+SQLAlchemy==2.0.41
+psycopg2-binary==2.9.10
